@@ -1,0 +1,87 @@
+name: CI/CD Pipeline - EMS Build & Release
+
+on:
+  push:
+    branches: [ main, master ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    name: Build, Test & Package Artifacts
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Set up OpenJDK 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        cache: false
+
+    - name: Compile Java Sources
+      run: |
+        echo "[INFO] Compiling all Java classes..."
+        mkdir -p bin
+        javac -encoding UTF-8 -cp "lib/mysql-connector-java.jar" -d bin $(find src -name "*.java")
+        echo "[SUCCESS] Java compilation passed."
+
+    - name: Run Smoke Test (In-Memory Verification)
+      run: |
+        echo "[INFO] Running automated smoke test..."
+        # Simulate selecting option 9 (Exit) to test clean boot and shutdown
+        echo "9" | java -cp "bin:lib/mysql-connector-java.jar" com.ems.Main
+        echo "[SUCCESS] Smoke test passed."
+
+    - name: Package Executable Fat JAR
+      run: |
+        echo "[INFO] Packaging distribution..."
+        mkdir -p dist/lib
+        
+        # Create Manifest
+        echo "Manifest-Version: 1.0" > manifest.txt
+        echo "Main-Class: com.ems.Main" >> manifest.txt
+        echo "Class-Path: lib/mysql-connector-java.jar" >> manifest.txt
+        echo "Created-By: GitHub Actions CI/CD" >> manifest.txt
+        
+        # Build JAR
+        jar cfm dist/EmployeeManagementSystem.jar manifest.txt -C bin .
+        
+        # Copy dependencies and config
+        cp lib/mysql-connector-java.jar dist/lib/
+        cp db.properties dist/
+        
+        # Add launchers
+        echo -e "@echo off\ntitle Employee Management System\njava -jar EmployeeManagementSystem.jar\npause" > dist/run.bat
+        echo -e "#!/usr/bin/env bash\njava -jar EmployeeManagementSystem.jar" > dist/run.sh
+        chmod +x dist/run.sh
+        
+        # Create zip bundle
+        zip -r EmployeeManagementSystem-v1.0.zip dist/
+        echo "[SUCCESS] Release bundle created."
+
+    - name: Upload Build Artifact to GitHub
+      uses: actions/upload-artifact@v4
+      with:
+        name: EmployeeManagementSystem-Release
+        path: dist/
+        retention-days: 30
+
+    - name: Create GitHub Release (on tag)
+      if: startsWith(github.ref, 'refs/tags/v')
+      uses: softprops/action-gh-release@v2
+      with:
+        files: |
+          EmployeeManagementSystem-v1.0.zip
+          dist/EmployeeManagementSystem.jar
+        draft: false
+        prerelease: false
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
