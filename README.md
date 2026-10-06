@@ -1,5 +1,14 @@
 # Employee Management System (EMS)
 
+> ### 🌐 Live Interactive Web Demo
+> - **Interactive Browser Demo**: **[https://ayan9397.github.io/Employee-Management-System/](https://ayan9397.github.io/Employee-Management-System/)**
+> - **GitHub Repository**: **[https://github.com/Ayan9397/Employee-Management-System](https://github.com/Ayan9397/Employee-Management-System)**
+> - **Architecture & Interview Guide**: **[OOP Architecture Explanation](https://github.com/Ayan9397/Employee-Management-System/blob/main/OOP_ARCHITECTURE_EXPLANATION.md)**
+
+[![Live Demo](https://img.shields.io/badge/Live_Demo-ayan9397.github.io%2FEmployee--Management--System-success.svg?style=for-the-badge&logo=githubpages)](https://ayan9397.github.io/Employee-Management-System/)
+[![Java](https://img.shields.io/badge/Java-21%20%7C%2023-orange.svg?style=for-the-badge&logo=java)](https://openjdk.org/)
+[![MySQL](https://img.shields.io/badge/MySQL-8.0-blue.svg?style=for-the-badge&logo=mysql&logoColor=white)](https://www.mysql.com/)
+
 A comprehensive, production-grade **Employee Management System** built with **Java (OOP)**, **JDBC**, and **MySQL**. Designed to demonstrate software engineering best practices, design patterns, clean architecture, and technical interview readiness.
 
 ---
