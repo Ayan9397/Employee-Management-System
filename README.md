@@ -84,7 +84,110 @@ cd "C:\Users\mohda\OneDrive\Desktop\Engineers Project\Employee Management System
    ```
 3. Update your credentials in `db.properties` (or use Option 8 in the console menu to enter your MySQL username/password interactively).
 
+## 📚 Technical Competency Proof (CISIN & Technical Interview Mapping)
+
+| Core Requirement | Implementation Evidence in EMS | Key Classes & Methods |
+|---|---|---|
+| **Classes & Objects** | Real-world business entities with constructor overloading and state management | `Employee.java`, `FullTimeEmployee.java`, `ContractEmployee.java`, `Department.java` |
+| **Inheritance** | Base abstraction extended by specialized employee models reusing common fields | `FullTimeEmployee extends Employee`<br>`ContractEmployee extends Employee` |
+| **Polymorphism** | Dynamic method dispatch where compensation calculation rules differ per employee type | `@Override public double calculateMonthlySalary()` implemented differently for Full-Time vs Contractors |
+| **Encapsulation** | Strict private field visibility, defensive bounds validation, and immutable identifiers | Getters/setters with regex bounds checking (`ValidationUtil.isValidEmail()`, `salary >= 0`) |
+| **Abstraction & Interfaces** | Contract separation decoupling callers from persistent storage and business contracts | `SalaryCalculatable.java`, `Identifiable.java`, `EmployeeRepository.java` (DAO) |
+| **Exception Handling** | Granular SQL error interception, transaction rollbacks, and defensive CLI input guards | `try-catch (SQLException e)` with `conn.rollback()` in `JdbcSalaryRepository.java` |
+| **Collections Framework** | Dynamic in-memory manipulation, department groupings, and aggregate sorting | `List<Employee>`, `ArrayList`, `Map<String, Double>` for payroll aggregations |
+| **JDBC & MySQL** | Direct relational connectivity, parameter binding, and prepared statement caching | `PreparedStatement`, `ResultSet`, `DriverManager`, `DatabaseConnection.java` |
+| **SQL & ACID Transactions** | Relational 3NF tables, foreign key cascades, and manual commit boundary management | `conn.setAutoCommit(false)`, `conn.commit()`, `conn.rollback()` |
+
+---
+
+## 🏛️ Object-Oriented Architecture Deep-Dive
+
+### 1. Polymorphism & Interface Abstraction
+```java
+// Common contract across all payable personnel
+public interface SalaryCalculatable {
+    double calculateMonthlySalary();
+}
+
+// Concrete Full-Time Implementation: Base salary / 12 + annual bonus
+public class FullTimeEmployee extends Employee {
+    private double annualSalary;
+    private double bonusPercentage;
+
+    @Override
+    public double calculateMonthlySalary() {
+        return (annualSalary / 12.0) + (annualSalary * bonusPercentage / 12.0);
+    }
+}
+
+// Concrete Contractor Implementation: Hourly billing rate * hours worked
+public class ContractEmployee extends Employee {
+    private double hourlyRate;
+    private int hoursWorked;
+
+    @Override
+    public double calculateMonthlySalary() {
+        return hourlyRate * (double) hoursWorked;
+    }
+}
+```
+
+### 2. JDBC & SQL Injection Prevention (`PreparedStatement`)
+All SQL interactions in `JdbcEmployeeRepository` and `JdbcSalaryRepository` use parameterized queries:
+```java
+String sql = "INSERT INTO employees (employee_id, first_name, last_name, email, department_id, employee_type) " +
+             "VALUES (?, ?, ?, ?, ?, ?)";
+try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+    stmt.setString(1, emp.getId());
+    stmt.setString(2, emp.getFirstName());
+    stmt.setString(3, emp.getLastName());
+    stmt.setString(4, emp.getEmail());
+    stmt.setInt(5, emp.getDepartmentId());
+    stmt.setString(6, emp.getEmployeeType());
+    stmt.executeUpdate();
+}
+```
+
+### 3. ACID Transactions with Rollback
+When creating or modifying employees and associated salary records, operations run inside an atomic transaction:
+```java
+try {
+    conn.setAutoCommit(false);
+    employeeDao.save(conn, employee);
+    salaryDao.recordSalary(conn, salaryRecord);
+    conn.commit(); // Atomic commit
+} catch (SQLException e) {
+    conn.rollback(); // Safe rollback on failure
+    throw new DatabaseOperationException("Transaction failed: " + e.getMessage(), e);
+} finally {
+    conn.setAutoCommit(true);
+}
+```
+
+---
+
+## ⚡ Quick Start
+
+### 1. Run Live in Browser (Zero Install)
+Launch the interactive web demo directly at **[https://ayan9397.github.io/Employee-Management-System/](https://ayan9397.github.io/Employee-Management-System/)**.
+
+### 2. Run Locally via Command Line (CLI)
+Double-click `run.bat` or run in PowerShell / Command Prompt:
+```powershell
+cd "C:\Users\mohda\OneDrive\Desktop\Engineers Project\Employee Management System"
+.\run.bat
+```
+*(The system automatically tests the connection: if MySQL credentials are ready, it connects via live JDBC; otherwise, it safely runs in In-Memory Demo Mode with pre-seeded data so you can test all features immediately).*
+
+### 3. Connect to Live MySQL
+1. Ensure MySQL Server is running.
+2. Run `setup_mysql.bat` (or import `sql/schema.sql` into MySQL Workbench / CLI):
+   ```powershell
+   .\setup_mysql.bat
+   ```
+3. Update credentials in `db.properties` or toggle mode in Menu Option 8.
+
 ---
 
 ## 📚 Interview Preparation Guide
-See [OOP_ARCHITECTURE_EXPLANATION.md](file:///C:/Users/mohda/OneDrive/Desktop/Engineers%20Project/Employee%20Management%20System/OOP_ARCHITECTURE_EXPLANATION.md) for clear explanations and talking points for recruiter questions regarding OOP, JDBC, and SQL design.
+See [OOP_ARCHITECTURE_EXPLANATION.md](file:///C:/Users/mohda/OneDrive/Desktop/Engineers%20Project/Employee%20Management%20System/OOP_ARCHITECTURE_EXPLANATION.md) for clear explanations and talking points for technical interview questions regarding OOP, JDBC, and SQL design.
